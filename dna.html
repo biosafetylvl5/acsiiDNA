@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>UTF-8 -> DNA</title>
+    <style>
+        body{
+            overflow: hidden;
+            height: 100%;
+            width:100%;
+            font-family: 'Roboto', sans-serif;
+        }
+        #contain{
+            position:absolute;
+            left:0;
+            top:0;
+            width:100vw;
+        }
+        #parent, #bin, #dna{
+            background-color: #01579B;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 34vh;
+            font-size: 10vh;
+            overflow: scroll;
+        }
+        #dna{
+            background-color: #0288D1;
+            font-size: 5em;
+        }
+        #bin{
+            background-color: #0277BD;
+            word-wrap: break-word;
+            font-size: 2em;
+        }
+        div::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script>
+        //A: 00 G: 01 C: 10 T: 11
+
+        // from http://stackoverflow.com/a/4238971/6539733
+        function placeCaretAtEnd(el) {
+            el.focus();
+            if (typeof window.getSelection != "undefined"
+                    && typeof document.createRange != "undefined") {
+                var range = document.createRange();
+                range.selectNodeContents(el);
+                range.collapse(false);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else if (typeof document.body.createTextRange != "undefined") {
+                var textRange = document.body.createTextRange();
+                textRange.moveToElementText(el);
+                textRange.collapse(false);
+                textRange.select();
+            }
+        }
+
+        // conversion from http://stackoverflow.com/a/10321522/6539733
+        var UTF_BITS = 8
+        function padLeftTo(string, padChar, numChars) {
+            return (new Array(numChars-string.length+1)).join(padChar) + string
+        }
+        function unicodeToBinary(char) {
+            return char.split('').map(function(codepoint) {
+                return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS)
+            })
+        }
+        function binaryToUnicode(binaryList) {
+            var codepointsAsNumbers = [];
+            while( binaryList.length>0 ){
+                var codepointBits = binaryList.slice(0,UTF_BITS);
+                binaryList = binaryList.slice(UTF_BITS);
+                codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
+            }
+            return String.fromCharCode.apply(this,codepointsAsNumbers);
+        }
+
+        function textToDna() {
+            var output = ""
+            var input = document.getElementById("text").innerHTML
+            for(i=0;i<input.length;i++) output+=unicodeToBinary(input[i])
+            document.getElementById("bin").innerHTML=output
+            var dna=""
+            for(i=0;i<output.length;i+=2){
+                var temp = output[i]+output[i+1]
+                if(temp=='00') dna+="A"
+                if(temp=='01') dna+="G"
+                if(temp=='10') dna+="C"
+                if(temp=='11') dna+="T"
+            }
+            document.getElementById("dna").innerHTML=dna
+        }
+
+        function dnaToText() {
+
+            var output = []
+            var input = document.getElementById("dna").innerHTML
+            for(i=0;i<input.length;i++){
+                if(input[i]=="A"||input[i]=="a") output.push(0,0)
+                else if(input[i]=="G"||input[i]=="g") output.push(0,1)
+                else if(input[i]=="C"||input[i]=="c") output.push(1,0)
+                else if(input[i]=="T"|input[i]=="t") output.push(1,1)
+            }
+            document.getElementById('bin').innerHTML=output.join("")
+            output = binaryToUnicode(output)
+            document.getElementById('text').innerHTML=output
+
+        }
+    </script>
+</head>
+<body>
+<div id="contain">
+<div id="parent">
+    <div contenteditable="true" id="text" onfocus="document.getElementById('text').innerHTML=''" oninput=" textToDna()">
+        ssi
+    </div>
+</div>
+
+<div id="bin">011100110111001101101001</div>
+<div id="dna" contenteditable="true" oninput="dnaToText()">GTATGTATGCCG</div>
+</div>
+</body>
+</html>
